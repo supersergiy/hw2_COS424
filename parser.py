@@ -1,5 +1,5 @@
 
-m sys import argv
+from sys import argv
 import getopt
 import re
 import numpy as np
