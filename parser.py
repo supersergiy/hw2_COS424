@@ -48,10 +48,10 @@ for i in data:
    features[i] = data[i]
    dat_size = data[i].shape
 
-   for j in range(1,(int(num_interval)-1)/2+1):
-      start_loc = i + (j-1)*int(interval_size)
+   for j in range(1, (int(num_interval) - 1) / 2 + 1):
+      start_loc = i + (j - 1) * int(interval_size)
     # pos offset
-      end_int = i + j*int(interval_size)
+      end_int = i + j * int(interval_size)
       sum = np.zeros(dat_size)
       count = np.zeros(dat_size)
       k = start_loc + 2
@@ -62,24 +62,25 @@ for i in data:
             sum += data[k]
             count += checknan
          k += 2
-         average = np.zeros(dat_size)
-         count[count == 0] = 1 #clear the case where count is zero
-         average = sum/count
-         features[i] = np.concatenate((features[i],average),axis=0)
-   # neg offset
-   end_int = i - j*int(interval_size)
-   sum = np.zeros(dat_size)
-   count = np.zeros(dat_size)
-   start_loc = i - (j-1)*int(interval_size)
-   k = start_loc - 2
+      average = np.zeros(dat_size)
+      count[count == 0] = 1 #clear the case where count is zero
+      average = sum/count
+      features[i] = np.concatenate((features[i],average),axis=0)
 
-   while(k >= end_int):
-      if k in data:
-         checknan = ~np.array(np.isnan(data[k])) #skip nan, so need to keep count correctly
-         data[k][np.isnan(data[k])] = 0 #change nan to zero to skip it in the average
-         sum += data[k]
-         count += checknan
-      k -= 2
+   # neg offset
+      end_int = i - j * int(interval_size)
+      sum = np.zeros(dat_size)
+      count = np.zeros(dat_size)
+      start_loc = i - (j-1)*int(interval_size)
+      k = start_loc - 2
+
+      while(k >= end_int):
+         if k in data:
+            checknan = ~np.array(np.isnan(data[k])) #skip nan, so need to keep count correctly
+            data[k][np.isnan(data[k])] = 0 #change nan to zero to skip it in the average
+            sum += data[k]
+            count += checknan
+         k -= 2
       average = np.zeros(dat_size)
       count[count == 0] = 1 #clear the case where count is zero
       average = sum/count
