@@ -3,6 +3,7 @@ from sys import argv
 import getopt
 import re
 import numpy as np
+import copy
 
 proj_path = '/u/biancad/COS424'
 data_path = 'data'
@@ -33,19 +34,22 @@ raw_data = open(inputfile)
 
 data = {}
 label = {}
+
+tmp = 0
 for line in raw_data:
   row = line.split()
   start_loc = int(row[1])
   data[start_loc] = np.loadtxt(row[4:-1])
   label[start_loc] = int(row[-1])
-
+  tmp = tmp + 1
+  if (tmp > 100000):
+     break
 raw_data.close()
-
 print 'buidling features'
 
 features = {}
 for i in data:
-   features[i] = data[i]
+   features[i] = data[i][:]
    dat_size = data[i].shape
 
    for j in range(1, (int(num_interval) - 1) / 2 + 1):
@@ -58,15 +62,17 @@ for i in data:
       while(k <= end_int):
          if k in data:
             checknan = ~np.array(np.isnan(data[k])) #skip nan, so need to keep count correctly
-            data[k][np.isnan(data[k])] = 0 #change nan to zero to skip it in the average
-            sum += data[k]
+            dummy = copy.copy(data[k])
+            dummy[np.isnan(dummy)] = 0
+            #data[k][np.isnan(data[k])] = 0 #change nan to zero to skip it in the average
+            #sum += data[k]
+            sum += dummy
             count += checknan
          k += 2
       average = np.zeros(dat_size)
       count[count == 0] = 1 #clear the case where count is zero
       average = sum/count
       features[i] = np.concatenate((features[i],average),axis=0)
-
    # neg offset
       end_int = i - j * int(interval_size)
       sum = np.zeros(dat_size)
@@ -77,8 +83,11 @@ for i in data:
       while(k >= end_int):
          if k in data:
             checknan = ~np.array(np.isnan(data[k])) #skip nan, so need to keep count correctly
-            data[k][np.isnan(data[k])] = 0 #change nan to zero to skip it in the average
-            sum += data[k]
+            dummy = copy.copy(data[k])
+            dummy[np.isnan(dummy)] = 0
+            #data[k][np.isnan(data[k])] = 0 #change nan to zero to skip it in the average
+            #sum += data[k]
+            sum += dummy
             count += checknan
          k -= 2
       average = np.zeros(dat_size)
@@ -107,6 +116,20 @@ for line in raw_data:
       teacher[loc] = float(row[4])
 raw_data.close()
 
+
+#calculate NaN predictors
+for i in data:
+   tmp = copy.copy(data[i])
+   checknan = ~np.array(np.isnan(tmp)) #skip nan, so need to keep count correctly
+   tmp[np.isnan(tmp)] = 0 #change nan to zero to skip it in the average
+   sum += tmp
+   count += checknan
+
+average = np.zeros(dat_size)
+count[count == 0] = 1 #clear the case where count is zero
+average = sum/count
+print count
+print average
 # write to files
 print 'writing to files'
 
@@ -125,7 +148,6 @@ outLtrain = open(output_Ltrain,'w')
 outLtest = open(output_Ltest,'w')
 
 for i in features:
-
    if(label[i] == 0):
     # test data
       np.savetxt(outXtest,features[i],newline=' ')
@@ -144,6 +166,8 @@ for i in features:
       outLtrain.write("\n")
    else:
       print "something odd just happened."
+
+
 outXtest.close()
 outYtest.close()
 outXtrain.close()
