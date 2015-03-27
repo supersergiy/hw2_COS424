@@ -4,7 +4,9 @@ import getopt
 import re
 import numpy as np
 import copy
+import math
 
+DEBUG = False
 proj_path = '/u/biancad/COS424'
 data_path = 'data'
 train_file = 'intersected_final_chr1_cutoff_20_train_revised.bed'
@@ -12,7 +14,7 @@ sample_file = 'intersected_final_chr1_cutoff_20_sample.bed'
 test_file = 'intersected_final_chr1_cutoff_20_test.bed'
 num_interval = '5'
 interval_size = '100'
-
+data_size = 33
 try:
   opts, remains = getopt.getopt(argv[1:],"n:i:f:",["--num=","--intsize=","--file="])
 except getopt.GetoptError:
@@ -40,24 +42,45 @@ for line in raw_data:
   row = line.split()
   start_loc = int(row[1])
   data[start_loc] = np.loadtxt(row[4:-1])
-  label[start_loc] = int(row[-1])
-  tmp = tmp + 1
-  if (tmp > 100000):
-     break
-raw_data.close()
-print 'buidling features'
 
+  if len(data[start_loc]) != data_size:
+     print "input format mistake: len = ", len(data[start_loc])
+
+  label[start_loc] = int(row[-1])
+  if (DEBUG):
+     tmp = tmp + 1
+     if (tmp > 100000):
+        break
+raw_data.close()
+
+print "calculating average based NaN prediction"
+ac = np.zeros(data_size)
+count = np.zeros(data_size)
+for i in data:
+   tmp = copy.copy(data[i])
+   checknan = ~np.array(np.isnan(tmp)) #skip nan, so need to keep count correctly
+   tmp[np.isnan(tmp)] = 0 #change nan to zero to skip it in the average
+   ac += tmp
+   count += checknan
+prediction = np.zeros(data_size)
+count[count == 0] = 1 #clear the case where count is zero
+prediction = ac / count #this is the prediction vector for each position
+
+print 'buidling features'
 features = {}
 for i in data:
-   features[i] = data[i][:]
-   dat_size = data[i].shape
+   features[i] = copy.copy(data[i][:])
+   #check for nans, substitute them wit predictions
+   for j in range(0, data_size):
+      if (math.isnan(features[i][j])):
+         features[i][j] = prediction[j]
 
    for j in range(1, (int(num_interval) - 1) / 2 + 1):
       start_loc = i + (j - 1) * int(interval_size)
     # pos offset
       end_int = i + j * int(interval_size)
-      sum = np.zeros(dat_size)
-      count = np.zeros(dat_size)
+      sum = np.zeros(data_size)
+      count = np.zeros(data_size)
       k = start_loc + 2
       while(k <= end_int):
          if k in data:
@@ -69,14 +92,18 @@ for i in data:
             sum += dummy
             count += checknan
          k += 2
-      average = np.zeros(dat_size)
-      count[count == 0] = 1 #clear the case where count is zero
+      average = np.zeros(data_size)
+      for c in range(0, data_size):
+         if (count[c] == 0):
+            count[c] = 1
+            sum[c] = prediction[c]
+      #count[count == 0] = 1 #clear the case where count is zero
       average = sum/count
       features[i] = np.concatenate((features[i],average),axis=0)
    # neg offset
       end_int = i - j * int(interval_size)
-      sum = np.zeros(dat_size)
-      count = np.zeros(dat_size)
+      sum = np.zeros(data_size)
+      count = np.zeros(data_size)
       start_loc = i - (j-1)*int(interval_size)
       k = start_loc - 2
 
@@ -90,8 +117,13 @@ for i in data:
             sum += dummy
             count += checknan
          k -= 2
-      average = np.zeros(dat_size)
-      count[count == 0] = 1 #clear the case where count is zero
+      average = np.zeros(data_size)
+      for c in range(0, data_size):
+         if (count[c] == 0):
+            count[c] = 1
+            sum[c] = prediction[c]
+
+      #count[count == 0] = 1 #clear the case where count is zero
       average = sum/count
       features[i] = np.concatenate((features[i],average),axis=0)
 # now, collect the teacher
@@ -117,19 +149,6 @@ for line in raw_data:
 raw_data.close()
 
 
-#calculate NaN predictors
-for i in data:
-   tmp = copy.copy(data[i])
-   checknan = ~np.array(np.isnan(tmp)) #skip nan, so need to keep count correctly
-   tmp[np.isnan(tmp)] = 0 #change nan to zero to skip it in the average
-   sum += tmp
-   count += checknan
-
-average = np.zeros(dat_size)
-count[count == 0] = 1 #clear the case where count is zero
-average = sum/count
-print count
-print average
 # write to files
 print 'writing to files'
 
