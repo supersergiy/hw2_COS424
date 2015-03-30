@@ -45,9 +45,36 @@ In this work, we evaluate ten separate classification methods in the task of cla
 This data set is the canonical text multi class classification data set in the machine learning community, and has been used as a benchmark for text classification methods in many contexts. In particular, recent text classification methods have used the bag-of-words representation of this data set projected down to a set of latent \emph{topics}, where the projection is informed by the class label~\cite{zhu2009,lacoste2009}. Then, for testing, new posts also are considered in the context of the low-dimensional topic space instead of their bag-of-words representation. This suggests that feature selection may benefit the classification task.
 
 
+
+\section{Methods}
+
+
+\subsection{Problem definition}
+
+The objective is to predict the methylation level of the new samples,
+of which only the methylation of the sites on the illumina 450K chip
+is known. The algorithm learns the relationship between the methylation
+levels of the illumina 450K sites from training samples and those
+from the new samples. Then, the trained model is used to predict the
+methylation level of the off-chip sites on the new samples from those
+on the training samples. Therefore, this is a supervised regression
+problem. 
+
+
 \subsection{Data processing}
 
-We downloaded the 20 Newsgroups data set on January 5th, 2015 from the UCI Machine Learning Archive~\footnote{{\tt http://kdd.ics.uci.edu/}}. We used the Python NLTK library to tokenize, convert to lower case, remove stop words, lemmatize, stem each word using the Porter stemming method, and filtering words that occurred fewer than $200$ times in the corpus~\cite{bird2009}. The resulting vocabulary contained $3,256$ words. We converted these words to the bag-of-words format as features of the posts; we used the newsgroup name that each document was posted to as its label. We considered the effect of feature selection on the classifiers, where feature selection is performed using a support vector machine with a linear kernel and $\ell_1$ penalty. After feature selection, we were left with $488$ dictionary words in the bag-of-words representation, which is $15\%$ of the original feature set size.
+The dataset is derived from \cite{ziller2013charting}. We use 165
+features in our dataset. The first 33 features are the methylation
+level of the 33 training samples at the same location of the target
+location to be predicted. The subsequent 33 features are the the average
+methylation levels of the 33 training samples over the +100 locations
+next to the location of the target. The next 33 features are the averages
+over the -100 locations before the location of the target. Similarly,
+the next two sets of 33 features are the averages over +101 to +200
+locations next to the location of the target, and -101 to -200 locations
+before the location of the target, respectively. The teacher (target)
+data are available for the locations on the illumina 45K chip. Thus,
+these sites are used for training.
 
 \subsection{Classification methods}
 
