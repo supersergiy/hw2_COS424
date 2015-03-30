@@ -6,21 +6,22 @@
 \usepackage{amsmath}
 \usepackage{multirow}
 
-\bibliographystyle{plos2009}
+\bibliographystyle{plos2015}
 
 
-\title{Fast classification of newsgroup posts}
+\title{Imputing Methylation Status}
 
 
 \author{
-Barbara E Engelhardt\\
+Thee Chanyaswad\\
+Department of Electrical Engineering\\
+Princeton University\\
+\texttt{tc7@princeton.edu} \\
+\And
+Sergiy Popovych\\
 Department of Computer Science\\
 Princeton University\\
-\texttt{bee@princeton.edu} \\
-%\And
-%Coauthor \\
-%Affiliation \\
-%\texttt{email} \\
+\texttt{popovych@princeton.edu} \\
 }
 
 \newcommand{\fix}{\marginpar{FIX}}
@@ -170,6 +171,6 @@ There are a number of directions to go that would improve these results. First, 
 %\subsubsection*{Acknowledgments}
 
 
-\bibliography{ref}
+\bibliography{ref_report}
 
 \end{document}
