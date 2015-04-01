@@ -1,0 +1,229 @@
+%% LyX 2.0.4 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass{article}
+\usepackage[latin9]{inputenc}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=false,bookmarksopen=false,
+ breaklinks=false,pdfborder={0 0 1},backref=section,colorlinks=false]
+ {hyperref}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+ % For LaTeX2e
+\usepackage{cos424}\usepackage{times}\usepackage{url}\usepackage{multirow}
+
+
+\title{Assignment 1: Email Classification}
+
+
+\author{
+Thee Chanyaswad\\
+Electrical Engineering Department\\
+Princeton University\\
+\texttt{tc7@princeton.edu} \\
+%\And
+%Coauthor \\
+%Affiliation \\
+%\texttt{email} \\
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\makeatother
+
+\begin{document}
+\maketitle 
+
+
+\section{Related Work}
+
+Severl works on predicting the methylation levels have been done.
+Many of the existng works consider the problem as logistic regression
+or classification \cite{zhang2013predicting}. From this problem formulation,
+K-means, linear discriminant analysis, support vector machine, logistic
+regression, etc. are used as choices of classifiers \cite{zhou2012prediction,fang2006predicting,das2006computational}.
+An alternate problem formulation is to solve linear regression or
+imputation \cite{zhang2013predicting}, which shows superior performance
+over classification. Many of the previous works also suggest that
+one of the prevalent features used is the methylation level of the
+same site and its neighbors.
+
+
+\section{Methods}
+
+
+\subsection{Problem definition}
+
+The objective is to predict the methylation level of the new samples,
+of which only the methylation of the sites on the illumina 450K chip
+is known. The algorithm learns the relationship between the methylation
+levels of the illumina 450K sites from training samples and those
+from the new samples. Then, the trained model is used to predict the
+methylation level of the off-chip sites on the new samples from those
+on the training samples. Therefore, this is a supervised regression
+problem. 
+
+
+\subsection{Data processing}
+
+The dataset is derived from \cite{ziller2013charting}. We use 165
+features in our dataset. The first 33 features are the methylation
+level of the 33 training samples at the same location of the target
+location to be predicted. The subsequent 33 features are the the average
+methylation levels of the 33 training samples over the +100 locations
+next to the location of the target. The next 33 features are the averages
+over the -100 locations before the location of the target. Similarly,
+the next two sets of 33 features are the averages over +101 to +200
+locations next to the location of the target, and -101 to -200 locations
+before the location of the target, respectively. The teacher (target)
+data are available for the locations on the illumina 45K chip. Thus,
+these sites are used for training.
+
+
+\subsection{Imputation methods\label{sub:Imputation-methods}}
+\begin{enumerate}
+\item Six Neural Networks with the following topologies and configurations:
+\end{enumerate}
+\begin{tabular}{ccccccc}
+\toprule 
+Networks & Size & Connection & Bias  & Input Layer & Hidden Layer & Output Layer\tabularnewline
+\midrule
+\midrule 
+NN1 & 165 x 100 x 1 & Fully-connected & False & Linear & Sigmoid & Linear\tabularnewline
+\midrule 
+NN2 & 165 x 100 x 1 & Fully-connected & True & Linear & Sigmoid & Linear\tabularnewline
+\midrule 
+NN3 & 165 x 80 x 1 & Fully-connected & True & Linear & Sigmoid & Linear\tabularnewline
+\midrule 
+NN4 & 165 x 100 x 1 & Fully-connected & True & Linear & Tanh & Linear\tabularnewline
+\midrule 
+NN5 & 165 x 150 x 1 & Fully-connected & True & Linear & Sigmoid & Linear\tabularnewline
+\bottomrule
+\end{tabular}
+
+
+\subsection{Evaluation}
+
+We evaluate each of our methods on the off-chip sites of the new samples.
+We obtain the ground-truth for these sites from \cite{ziller2013charting}.
+We use the Root-Mean-Square-Error ($RMSE$) and the coefficient of
+determination ($r^{2}$) as our main measures of success. The two
+measures are defined as: 
+\begin{equation}
+RMSE=\sqrt{\frac{1}{n}\underset{i=1}{\overset{n}{\sum}}(y_{i}-p_{i})^{2}}\label{eq:1}
+\end{equation}
+\begin{equation}
+r^{2}=1-\frac{\underset{i=1}{\overset{n}{\sum}}(y_{i}-p_{i})^{2}}{\underset{i=1}{\overset{n}{\sum}}(y_{i}-\frac{1}{n}\underset{i=1}{\overset{n}{\sum}}y_{i})^{2}}\label{eq:2}
+\end{equation}
+where $y_{i}$ is the ground-truth, and $p_{i}$ is the prediction.
+Ideally, we want $RMSE$ to be as close to zero as possible, while
+$r^{2}$ to be as close to 1 as possible.
+
+
+\section{Results}
+
+
+\subsection{Evaluation results}
+
+\begin{table}
+\begin{centering}
+\begin{tabular}{ccc}
+\hline 
+Method  & RMSE & r2\tabularnewline
+\hline 
+\hline 
+NN1  & 0.0784  & 0.7851\tabularnewline
+\hline 
+NN2  & 0.0793  & 0.7800\tabularnewline
+\hline 
+NN3  & 0.0965  & 0.6741\tabularnewline
+\hline 
+NN4 & 0.1015  & 0.6401\tabularnewline
+\hline 
+NN5 & 0.0791 & 0.7813\tabularnewline
+\hline 
+\end{tabular}
+\par\end{centering}
+
+\caption{The comparative performance of the methods.\label{tab:perf}}
+\end{table}
+
+
+
+\subsubsection{Neural Networks Performance}
+
+By looking at Table \ref{tab:perf} along with the topology of each
+neural netowork in Section \ref{sub:Imputation-methods}, we arrive
+at the following observations for the neural network methods:
+\begin{enumerate}
+\item Increasing the number of hidden layer can improve the performance
+(NN2, NN3, NN5). This presumably comes from the fact that wider hidden
+layer, in effect, allows the input to be mapped to a larger dimensional
+space.
+\item The bias term does not make much difference in performance (NN1, NN2).
+Adding the bias term is equivalent to adding a constant input neuron.
+As one may expect, adding one input neuron does not alter the output
+significantly.
+\end{enumerate}
+\begin{figure}
+\begin{centering}
+\includegraphics[scale=0.5]{Figures/evolve}
+\par\end{centering}
+
+\caption{Evolution of the cost value of neural networks over iterations. \label{fig:Evolution}}
+
+
+\end{figure}
+
+
+In evaluating the time complexity of the six neural networks, figure
+\ref{fig:Evolution} shows that all networks converge rather quickly.
+This implies that different configurations of same network depth do
+not introduce much additional cost. However, this may not hold true
+for deeper networks, and this could be a topic of future study.
+
+
+\subsection{Features}
+
+\begin{figure}
+\begin{centering}
+\includegraphics[scale=0.5]{Figures/features}
+\par\end{centering}
+
+\caption{A sample set of feature weights for NN1.\label{fig:features}}
+
+
+\end{figure}
+
+
+Neural networks are non-linear methods, so feature interpretation
+is not always apparent. One way to interpret the features is to look
+at the weights of the linear input layer. Still, each hidden neuron
+has its own set of input layer weights. Fortunately, in our NN1 model,
+we observe that the different sets of input layer weights to the hidden
+neuron look similar. Therefore, we are able to use one set of the
+weights to interpret the features. Figure \ref{fig:features} shows
+a sample set of feature weights of NN1. The first 33 feature indices
+correpond to the methylation levels of the 33 samples at the same
+location as the target. The subsequent indices correpond to the average
+methylation levels of the neighbors from closer to further from the
+location of the target. From these sample weights, we observe that
+there is not much distinction in predicting power from the methylation
+levels at the same location and from the neighbors. Thus, we suggest
+that one way to imporve this neural networks model is to increase
+the size of the features by using the further neighbors.
+
+\bibliographystyle{plos2015}
+\bibliography{ref_report}
+
+\end{document}
